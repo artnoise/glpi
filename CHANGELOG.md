@@ -17,6 +17,21 @@ The present file will list all changes made to the project; according to the
 
 #### Deprecated
 
+- `Config::checkExtensions()`
+- `Plugin::checkGlpiParameters()`
+- `Plugin::checkGlpiPlugins()`
+- `Plugin::checkGlpiVersion()`
+- `Plugin::checkPhpExtensions()`
+- `Plugin::checkPhpParameters()`
+- `Plugin::checkPhpVersion()`
+- `Plugin::checkVersions()`
+- `Plugin::getGlpiPrever()`
+- `Plugin::getGlpiVersion()`
+- `Plugin::getPhpVersion()`
+- `Plugin::isGlpiPrever()`
+- `Plugin::messageIncompatible()`
+- `Plugin::messageMissingRequirement()`
+
 #### Removed
 
 ## [9.5.1] unreleased
