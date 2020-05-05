@@ -2,7 +2,7 @@
 /**
  * ---------------------------------------------------------------------
  * GLPI - Gestionnaire Libre de Parc Informatique
- * Copyright (C) 2015-2020 Teclib' and contributors.
+ * Copyright (C) 2015-2019 Teclib' and contributors.
  *
  * http://glpi-project.org
  *
@@ -28,31 +28,44 @@
  * You should have received a copy of the GNU General Public License
  * along with GLPI. If not, see <http://www.gnu.org/licenses/>.
  * ---------------------------------------------------------------------
-*/
+ */
 
-namespace tests\units\Glpi\System\Requirement;
+namespace Glpi\System\Requirement;
 
-class DbTimezones extends \GLPITestCase {
+if (!defined('GLPI_ROOT')) {
+   die("Sorry. You can't access this file directly");
+}
 
-   public function testCheckWithAvailableTimezones() {
+/**
+ * @since 9.5.0
+ */
+class PlugCustomPrerequisites extends AbstractRequirement {
 
-      $this->mockGenerator->orphanize('__construct');
-      $db = new \mock\DB();
-      $this->calling($db)->areTimezonesAvailable = true;
+   /**
+    * GLPI plugin key.
+    *
+    * @var string
+    */
+   private $key;
 
-      $this->newTestedInstance($db);
-      $this->boolean($this->testedInstance->isValidated())->isEqualTo(true);
-      $this->array($this->testedInstance->getValidationMessages())
-         ->isEqualTo(['Timezones seems loaded in database.']);
+   /**
+    * @param string $key  GLPI plugin key
+    */
+   public function __construct(string $key) {
+      $this->title = sprintf(__('Testing GLPI plugin %s custom prerequisites'), $key);
+      $this->key = $key;
    }
 
-   public function testCheckWithUnavailableTimezones() {
-
-      $this->mockGenerator->orphanize('__construct');
-      $db = new \mock\DB();
-      $this->calling($db)->areTimezonesAvailable = false;
-
-      $this->newTestedInstance($db);
-      $this->boolean($this->testedInstance->isValidated())->isEqualTo(false);
+   protected function check() {
+      $check_function = 'plugin_' . $this->key . '_check_prerequisites';
+      if (function_exists($check_function)) {
+         ob_start();
+         $this->validated = $check_function();
+         $this->validation_messages[] = ob_get_contents();
+         ob_end_clean();
+      } else {
+         $this->out_of_context = true; // No function defined, this check has no valid context
+         $this->validated = true;
+      }
    }
 }

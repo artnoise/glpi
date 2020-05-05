@@ -2,7 +2,7 @@
 /**
  * ---------------------------------------------------------------------
  * GLPI - Gestionnaire Libre de Parc Informatique
- * Copyright (C) 2015-2020 Teclib' and contributors.
+ * Copyright (C) 2015-2019 Teclib' and contributors.
  *
  * http://glpi-project.org
  *
@@ -28,31 +28,43 @@
  * You should have received a copy of the GNU General Public License
  * along with GLPI. If not, see <http://www.gnu.org/licenses/>.
  * ---------------------------------------------------------------------
-*/
+ */
 
-namespace tests\units\Glpi\System\Requirement;
+namespace Glpi\System\Requirement;
 
-class DbTimezones extends \GLPITestCase {
+if (!defined('GLPI_ROOT')) {
+   die("Sorry. You can't access this file directly");
+}
 
-   public function testCheckWithAvailableTimezones() {
+use Plugin;
 
-      $this->mockGenerator->orphanize('__construct');
-      $db = new \mock\DB();
-      $this->calling($db)->areTimezonesAvailable = true;
+/**
+ * @since 9.5.0
+ */
+class GlpiPlugin extends AbstractRequirement {
 
-      $this->newTestedInstance($db);
-      $this->boolean($this->testedInstance->isValidated())->isEqualTo(true);
-      $this->array($this->testedInstance->getValidationMessages())
-         ->isEqualTo(['Timezones seems loaded in database.']);
+   /**
+    * GLPI plugin key.
+    *
+    * @var string
+    */
+   private $key;
+
+   /**
+    * @param string $key  GLPI plugin key
+    */
+   public function __construct(string $key) {
+      $this->title = sprintf(__('Testing GLPI plugin %s'), $key);
+      $this->key = $key;
    }
 
-   public function testCheckWithUnavailableTimezones() {
+   protected function check() {
+      $plugin = new Plugin();
 
-      $this->mockGenerator->orphanize('__construct');
-      $db = new \mock\DB();
-      $this->calling($db)->areTimezonesAvailable = false;
+      $this->validated = $plugin->isInstalled($this->key) && $plugin->isActivated($this->key);
 
-      $this->newTestedInstance($db);
-      $this->boolean($this->testedInstance->isValidated())->isEqualTo(false);
+      $this->validation_messages[] = $this->validated
+         ? sprintf(__('GLPI plugin %s is installed and activated.'), $this->key)
+         : sprintf(__('GLPI plugin %s is required.'), $this->key);
    }
 }

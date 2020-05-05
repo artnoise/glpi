@@ -2,7 +2,7 @@
 /**
  * ---------------------------------------------------------------------
  * GLPI - Gestionnaire Libre de Parc Informatique
- * Copyright (C) 2015-2020 Teclib' and contributors.
+ * Copyright (C) 2015-2019 Teclib' and contributors.
  *
  * http://glpi-project.org
  *
@@ -28,31 +28,39 @@
  * You should have received a copy of the GNU General Public License
  * along with GLPI. If not, see <http://www.gnu.org/licenses/>.
  * ---------------------------------------------------------------------
-*/
+ */
 
-namespace tests\units\Glpi\System\Requirement;
+namespace Glpi\System\Requirement;
 
-class DbTimezones extends \GLPITestCase {
+if (!defined('GLPI_ROOT')) {
+   die("Sorry. You can't access this file directly");
+}
 
-   public function testCheckWithAvailableTimezones() {
+/**
+ * @since 9.5.0
+ */
+class ExtensionCallback extends Extension {
 
-      $this->mockGenerator->orphanize('__construct');
-      $db = new \mock\DB();
-      $this->calling($db)->areTimezonesAvailable = true;
+   /**
+    * Callback function that will be used during checks.
+    *
+    * @var callable
+    */
+   private $callback;
 
-      $this->newTestedInstance($db);
-      $this->boolean($this->testedInstance->isValidated())->isEqualTo(true);
-      $this->array($this->testedInstance->getValidationMessages())
-         ->isEqualTo(['Timezones seems loaded in database.']);
+   /**
+    * @param string   $name      Extension name.
+    * @param callable $callback  Callback function that will be used during checks.
+    * @param bool     $optional  Indicated if extension is optional.
+    */
+   public function __construct(string $name, callable $callback, bool $optional = false) {
+      parent::__construct($name, $optional);
+      $this->callback = $callback;
    }
 
-   public function testCheckWithUnavailableTimezones() {
-
-      $this->mockGenerator->orphanize('__construct');
-      $db = new \mock\DB();
-      $this->calling($db)->areTimezonesAvailable = false;
-
-      $this->newTestedInstance($db);
-      $this->boolean($this->testedInstance->isValidated())->isEqualTo(false);
+   protected function check() {
+      $this->validated = call_user_func($this->callback);
+      $this->buildValidationMessage();
    }
+
 }
