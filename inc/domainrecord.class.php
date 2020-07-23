@@ -276,6 +276,8 @@ class DomainRecord extends CommonDBChild {
    }
 
    function showForm($ID, $options = []) {
+      global $CFG_GLPI;
+
       $this->initForm($ID, $options);
       $this->showFormHeader($options);
 
@@ -325,10 +327,62 @@ class DomainRecord extends CommonDBChild {
       echo "</td>";
       echo "</tr>";
 
+      $rand = mt_rand();
       echo "<tr class='tab_bg_1'>";
       echo "<td>" . __('Data') . "</td>";
       echo "<td colspan='3'>";
-      Html::autocompletionTextField($this, "data");
+      echo "<input type='text' id='data{$rand}' name='data' value=\"".Html::cleanInputText($this->fields["data"])."\">";
+      echo " <a href='#' title='".__s('Open helper form')."'>";
+      echo "<i class='far fa-edit'></i>";
+      echo "<span class='sr-only'>".__('Open helper form')."</span>";
+      echo "</a>";
+
+      $js = <<<JAVASCRIPT
+         $(
+            function () {
+               $('#data{$rand} + a').click(
+                  function (event) {
+                     event.preventDefault();
+
+                     var select = $(this).closest('form').find('[name="domainrecordtypes_id"]');
+                     var domainrecordtypes_id = select.val();
+                     var title = domainrecordtypes_id > 0 ? select.find('option:selected').html() : '';
+
+                     var container = $('<div></div>');
+                     container.dialog(
+                        {
+                           modal:    true,
+                           title:    title,
+                           height:   'auto',
+                           width:    400,
+                           open: function () {
+                              $(this).dialog('option', 'position', ['center', 'center']);
+                           },
+                           close: function() {
+                              $(this).remove();
+                           }
+                        }
+                     ).load(
+                        '{$CFG_GLPI["root_doc"]}/ajax/domainrecord_data_form.php',
+                        {
+                           domainrecordtypes_id: domainrecordtypes_id,
+                           input_id: 'data{$rand}'
+                        },
+                        function() {
+                           $(this).find('form').on(
+                              'submit',
+                              function(event) {
+                                 container.dialog('close');
+                              }
+                           );
+                        }
+                     );
+                  }
+               );
+            }
+         );
+JAVASCRIPT;
+      echo Html::scriptBlock($js);
       echo "</td>";
       echo "</tr>";
 

@@ -30,38 +30,19 @@
  * ---------------------------------------------------------------------
  */
 
-/**
- * Update from 9.5.x to x.x.x
- *
- * @return bool for success (will die for most error)
-**/
-function update95toXX() {
-   global $DB, $migration;
+include ('../inc/includes.php');
+Html::header_nocache();
 
-   $updateresult     = true;
-   $ADDTODISPLAYPREF = [];
+Session::checkLoginUser();
 
-   //TRANS: %s is the number of new version
-   $migration->displayTitle(sprintf(__('Update to %s'), 'x.x.x'));
-   $migration->setVersion('x.x.x');
-
-   require __DIR__ . '/update_95_xx/domains.php';
-
-   // ************ Keep it at the end **************
-   foreach ($ADDTODISPLAYPREF as $type => $tab) {
-      $rank = 1;
-      foreach ($tab as $newval) {
-         $DB->updateOrInsert("glpi_displaypreferences", [
-            'rank'      => $rank++
-         ], [
-            'users_id'  => "0",
-            'itemtype'  => $type,
-            'num'       => $newval,
-         ]);
-      }
-   }
-
-   $migration->executeMigration();
-
-   return $updateresult;
+$domainrecordtype = new DomainRecordType();
+if (!array_key_exists('domainrecordtypes_id', $_REQUEST)
+    || !$domainrecordtype->getFromDB($_REQUEST['domainrecordtypes_id'])) {
+   $domainrecordtype->getEmpty();
 }
+
+Html::popHeader($domainrecordtype->fields['name']);
+
+$domainrecordtype->showDataAjaxForm($_REQUEST['input_id'] ?? '');
+
+Html::popFooter();
