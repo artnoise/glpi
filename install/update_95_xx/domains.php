@@ -35,23 +35,6 @@
  * @var Migration $migration
  */
 
-// Create new CAA default
-if (countElementsInTable('glpi_domainrecordtypes', ['name' => 'CAA']) === 0) {
-   foreach (DomainRecordType::getDefaults() as $type) {
-      if ($type['name'] === 'CAA') {
-         unset($type['id']);
-         unset($type['fields']);
-         $migration->addPostQuery(
-            $DB->buildInsert(
-               DomainRecordType::getTable(),
-               $type
-            )
-         );
-         break;
-      }
-   }
-}
-
 // Add fields descriptor field
 if (!$DB->fieldExists('glpi_domainrecordtypes', 'fields')) {
    $migration->addField(
@@ -63,6 +46,9 @@ if (!$DB->fieldExists('glpi_domainrecordtypes', 'fields')) {
       ]
    );
    foreach (DomainRecordType::getDefaults() as $type) {
+      if (countElementsInTable('glpi_domainrecordtypes', ['name' => $type['name']]) === 0) {
+         continue;
+      }
       $migration->addPostQuery(
          $DB->buildUpdate(
             'glpi_domainrecordtypes',
@@ -70,5 +56,21 @@ if (!$DB->fieldExists('glpi_domainrecordtypes', 'fields')) {
             ['name' => $type['name']]
          )
       );
+   }
+}
+
+// Create new CAA default
+if (countElementsInTable('glpi_domainrecordtypes', ['name' => 'CAA']) === 0) {
+   foreach (DomainRecordType::getDefaults() as $type) {
+      if ($type['name'] === 'CAA') {
+         unset($type['id']);
+         $migration->addPostQuery(
+            $DB->buildInsert(
+               DomainRecordType::getTable(),
+               $type
+            )
+         );
+         break;
+      }
    }
 }
