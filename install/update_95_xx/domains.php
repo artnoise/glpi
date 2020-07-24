@@ -66,7 +66,7 @@ if (!$DB->fieldExists('glpi_domainrecordtypes', 'fields')) {
       $migration->addPostQuery(
          $DB->buildUpdate(
             'glpi_domainrecordtypes',
-            ['fields' => json_encode($type['fields'])],
+            ['fields' => $type['fields']],
             ['name' => $type['name']]
          )
       );

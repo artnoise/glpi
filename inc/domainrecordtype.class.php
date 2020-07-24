@@ -269,6 +269,7 @@ class DomainRecordType extends CommonDropdown
       return array_map(
          function($e) {
             $e['is_recursive'] = 1;
+            $e['fields'] = json_encode($e['fields']);
             return $e;
          },
          self::$knowtypes

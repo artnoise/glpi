@@ -7997,6 +7997,7 @@ DROP TABLE IF EXISTS `glpi_domainrecordtypes`;
 CREATE TABLE `glpi_domainrecordtypes` (
   `id` int(11) NOT NULL        AUTO_INCREMENT,
   `name` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `fields` text COLLATE utf8_unicode_ci,
   `entities_id` int(11) NOT NULL        DEFAULT '0',
   `is_recursive` tinyint(1) NOT NULL DEFAULT '0',
   `comment` text COLLATE utf8_unicode_ci,
