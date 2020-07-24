@@ -2492,6 +2492,7 @@ class Toolbox {
             foreach ($data as $row) {
                $res = $stmt->bind_param($types, ...array_values($row));
                if (false === $res) {
+                  var_dump($types, array_values($row), $data[0]);
                   $msg = "Error binding params in table $table\n";
                   $msg .= print_r($row, true);
                   throw new \RuntimeException($msg);
