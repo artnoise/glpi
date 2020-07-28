@@ -70,7 +70,7 @@ class DomainRecordType extends CommonDropdown
             ],
             [
                'label'       => 'Server',
-               'placeholder' => 'eg. mail.example.com',
+               'placeholder' => 'eg. mail.example.com.',
             ],
          ],
       ], [
@@ -90,11 +90,11 @@ class DomainRecordType extends CommonDropdown
          'fields'    => [
             [
                'label'       => 'Primary name server',
-               'placeholder' => 'eg. ns1.example.com',
+               'placeholder' => 'eg. ns1.example.com.',
             ],
             [
                'label'       => 'Primary contact',
-               'placeholder' => 'eg. admin.example.com',
+               'placeholder' => 'eg. admin.example.com.',
             ],
             [
                'label'       => 'Serial',
@@ -136,7 +136,7 @@ class DomainRecordType extends CommonDropdown
             ],
             [
                'label'       => 'Target',
-               'placeholder' => 'eg. sip.example.com',
+               'placeholder' => 'eg. sip.example.com.',
             ],
          ],
       ], [
