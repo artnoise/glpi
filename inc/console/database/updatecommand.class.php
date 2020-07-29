@@ -139,6 +139,8 @@ class UpdateCommand extends AbstractCommand implements ForceNoPluginsOptionComma
          return 0;
       }
 
+      // TODO Check presence of security key file
+
       if (!$no_interaction) {
          // Ask for confirmation (unless --no-interaction)
          /** @var \Symfony\Component\Console\Helper\QuestionHelper $question_helper */
