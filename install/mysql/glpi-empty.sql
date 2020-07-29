@@ -8010,6 +8010,7 @@ CREATE TABLE `glpi_domainrecords` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   `data` text COLLATE utf8_unicode_ci DEFAULT NULL,
+  `data_obj` text COLLATE utf8_unicode_ci DEFAULT NULL,
   `entities_id` int(11) NOT NULL DEFAULT '0',
   `is_recursive` tinyint(1) NOT NULL DEFAULT '0',
   `domains_id` int(11) NOT NULL DEFAULT '0',

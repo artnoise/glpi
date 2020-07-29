@@ -43,6 +43,6 @@ if (!array_key_exists('domainrecordtypes_id', $_REQUEST)
 
 Html::popHeader($domainrecordtype->fields['name']);
 
-$domainrecordtype->showDataAjaxForm($_REQUEST['input_id'] ?? '');
+$domainrecordtype->showDataAjaxForm($_REQUEST['str_input_id'] ?? '', $_REQUEST['obj_input_id'] ?? '');
 
 Html::popFooter();

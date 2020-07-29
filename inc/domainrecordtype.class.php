@@ -65,10 +65,12 @@ class DomainRecordType extends CommonDropdown
          'comment'   => 'Mail eXchange',
          'fields'    => [
             [
+               'key'         => 'priority',
                'label'       => 'Priority',
                'placeholder' => 'eg. 10',
             ],
             [
+               'key'         => 'server',
                'label'       => 'Server',
                'placeholder' => 'eg. mail.example.com.',
             ],
@@ -89,30 +91,37 @@ class DomainRecordType extends CommonDropdown
          'comment'   => 'Start Of Authority',
          'fields'    => [
             [
+               'key'         => 'primary_name_server',
                'label'       => 'Primary name server',
                'placeholder' => 'eg. ns1.example.com.',
             ],
             [
+               'key'         => 'primary_contact',
                'label'       => 'Primary contact',
                'placeholder' => 'eg. admin.example.com.',
             ],
             [
+               'key'         => 'serial',
                'label'       => 'Serial',
                'placeholder' => 'eg. 2020010101',
             ],
             [
+               'key'         => 'zone_refresh_timer',
                'label'       => 'Zone refresh timer',
                'placeholder' => 'eg. 86400',
             ],
             [
+               'key'         => 'failed_refresh_retry_timer',
                'label'       => 'Failed refresh retry timer',
                'placeholder' => 'eg. 7200',
             ],
             [
+               'key'         => 'zone_expiry_timer',
                'label'       => 'Zone expiry timer',
                'placeholder' => 'eg. 1209600',
             ],
             [
+               'key'         => 'minimum_ttl',
                'label'       => 'Minimum TTL',
                'placeholder' => 'eg. 300',
             ],
@@ -123,18 +132,22 @@ class DomainRecordType extends CommonDropdown
          'comment'   => 'Location of service',
          'fields'    => [
             [
+               'key'         => 'priority',
                'label'       => 'Priority',
                'placeholder' => 'eg. 0',
             ],
             [
+               'key'         => 'weight',
                'label'       => 'Weight',
                'placeholder' => 'eg. 10',
             ],
             [
+               'key'         => 'port',
                'label'       => 'Port',
                'placeholder' => 'eg. 5060',
             ],
             [
+               'key'         => 'target',
                'label'       => 'Target',
                'placeholder' => 'eg. sip.example.com.',
             ],
@@ -145,6 +158,7 @@ class DomainRecordType extends CommonDropdown
          'comment'   => 'Descriptive text',
          'fields'    => [
             [
+               'key'         => 'data',
                'label'       => 'TXT record data',
                'placeholder' => 'Your TXT record data',
                'quote_value' => true,
@@ -156,14 +170,17 @@ class DomainRecordType extends CommonDropdown
          'comment'   => 'Certification Authority Authorization',
          'fields'    => [
             [
+               'key'         => 'flag',
                'label'       => 'Flag',
                'placeholder' => 'eg. 0',
             ],
             [
+               'key'         => 'tag',
                'label'       => 'Tag',
                'placeholder' => 'eg. issue',
             ],
             [
+               'key'         => 'value',
                'label'       => 'Value',
                'placeholder' => 'eg. letsencrypt.org',
                'quote_value' => true,
@@ -221,6 +238,55 @@ class DomainRecordType extends CommonDropdown
       return parent::prepareInputForUpdate($input);
    }
 
+   public function post_updateItem($history = 1) {
+      global $DB;
+
+      if (in_array('fields', $this->updates)) {
+         $old_fields = $this->decodeFields($this->oldvalues['fields']);
+         $new_fields = $this->decodeFields($this->fields['fields']);
+
+         $old_keys = array_column($old_fields, 'key');
+         $new_keys = array_column($new_fields, 'key');
+         sort($old_keys);
+         sort($new_keys);
+
+         $properties_changed = false;
+         if ($old_keys != $new_keys) {
+            $properties_changed = true;
+         } else {
+            $getprop = function ($key, $array) {
+               foreach ($array as $prop) {
+                  if ($prop['key'] === $key) {
+                     return $prop;
+                  }
+               }
+            };
+
+            foreach ($old_keys as $key) {
+               $old_prop = $getprop($key, $old_fields);
+               $new_prop = $getprop($key, $new_fields);
+
+               $old_prop_quote_value = array_key_exists('quote_value', $old_prop) ? $old_prop['quote_value'] : false;
+               $new_prop_quote_value = array_key_exists('quote_value', $new_prop) ? $new_prop['quote_value'] : false;
+               if ($old_prop_quote_value !== $new_prop_quote_value) {
+                  $properties_changed = true;
+                  break;
+               }
+            }
+         }
+
+         if ($properties_changed) {
+            // Remove data stored as obj as properties changed.
+            // Do not remove data stored as string as this representation may still be valid.
+            $DB->update(
+               DomainRecord::getTable(),
+               ['data_obj' => NULL],
+               [self::getForeignKeyField() => $this->fields['id']]
+            );
+         }
+      }
+   }
+
    /**
     * Validate fields descriptor.
     *
@@ -234,23 +300,21 @@ class DomainRecordType extends CommonDropdown
          return false;
       }
 
-      $fields = json_decode($fields_str, true);
-      if (json_last_error() !== JSON_ERROR_NONE) {
-         $fields_str = stripslashes(preg_replace('/(\\\r|\\\n)/', '', $fields_str));
-         $fields = json_decode($fields_str, true);
-      }
-      if (json_last_error() !== JSON_ERROR_NONE || !is_array($fields)) {
+      $fields = $this->decodeFields($fields_str);
+      if (!is_array($fields)) {
          Session::addMessageAfterRedirect(__('Invalid JSON used to define fields.'), true, ERROR);
          return false;
       }
 
       foreach ($fields as $field) {
-         if (!is_array($field) || !array_key_exists('label', $field) || !is_string($field['label'])
+         if (!is_array($field)
+             || !array_key_exists('key', $field) || !is_string($field['key'])
+             || !array_key_exists('label', $field) || !is_string($field['label'])
              || (array_key_exists('placeholder', $field) && !is_string($field['placeholder']))
              || (array_key_exists('quote_value', $field) && !is_bool($field['quote_value']))
-             || count(array_diff(array_keys($field), ['label', 'placeholder', 'quote_value'])) > 0) {
+             || count(array_diff(array_keys($field), ['key', 'label', 'placeholder', 'quote_value'])) > 0) {
             Session::addMessageAfterRedirect(
-               __('Valid field descriptor properties are: label (string, mandatory), placeholder (string, optionnal), quote_value (boolean, optional).'),
+               __('Valid field descriptor properties are: key (string, mandatory), label (string, mandatory), placeholder (string, optionnal), quote_value (boolean, optional).'),
                true,
                ERROR
             );
@@ -259,6 +323,28 @@ class DomainRecordType extends CommonDropdown
       }
 
       return true;
+   }
+
+   /**
+    * Decode JSON encoded fields.
+    * Handle decoding of sanitized value.
+    * Returns null if unable to decode.
+    *
+    * @param string $json_encoded_fields
+    *
+    * @return array|null
+    */
+   private function decodeFields(string $json_encoded_fields): ?array {
+      $fields = json_decode($json_encoded_fields, true);
+      if (json_last_error() !== JSON_ERROR_NONE) {
+         $fields_str = stripslashes(preg_replace('/(\\\r|\\\n)/', '', $json_encoded_fields));
+         $fields = json_decode($fields_str, true);
+      }
+      if (json_last_error() !== JSON_ERROR_NONE || !is_array($fields)) {
+         return null;
+      }
+
+      return $fields;
    }
 
    static function getTypeName($nb = 0) {
@@ -279,9 +365,10 @@ class DomainRecordType extends CommonDropdown
    /**
     * Display ajax form used to fill record data.
     *
-    * @param string $input_id    Id of input used to get/store record data.
+    * @param string $str_input_id    Id of input used to get/store record data as string.
+    * @param string $obj_input_id    Id of input used to get/store record data as object.
     */
-   function showDataAjaxForm(string $input_id) {
+   function showDataAjaxForm(string $str_input_id, string $obj_input_id) {
       $rand = mt_rand();
 
       echo '<form id="domain_record_data' . $rand . '">';
@@ -291,19 +378,20 @@ class DomainRecordType extends CommonDropdown
       if (empty($fields)) {
          $fields = [
             [
+               'key'   => 'data',
                'label' => __('Data'),
             ],
          ];
       }
 
-      foreach ($fields as $index => $field) {
+      foreach ($fields as $field) {
          $placeholder = Html::entities_deep($field['placeholder'] ?? '');
          $quote_value = $field['quote_value'] ?? false;
 
          echo '<tr class="tab_bg_1">';
          echo '<td>' . $field['label'] . '</td>';
          echo '<td>';
-         echo '<input data-index="' . $index . '" '
+         echo '<input name="' . $field['key'] . '" '
             . 'placeholder="' . $placeholder . '" '
             . 'data-quote-value="' . ($quote_value ? 'true' : 'false') . '" '
             . (!$quote_value ? 'pattern="[^\s]+" ' : '') // prevent usage of spaces in unquoted values
@@ -327,7 +415,7 @@ class DomainRecordType extends CommonDropdown
                var form = $('#domain_record_data{$rand}');
 
                // Put existing data into fields
-               var data_to_copy = $('#{$input_id}').val();
+               var data_to_copy = $('#{$str_input_id}').val();
                form.find('input').each(
                   function () {
                      var endoffset = 0;
@@ -368,6 +456,7 @@ class DomainRecordType extends CommonDropdown
                      event.preventDefault();
 
                      var data_tokens = [];
+                     var data_obj = {};
                      $(this).find('input').each(
                         function () {
                            var value = $(this).val();
@@ -375,10 +464,12 @@ class DomainRecordType extends CommonDropdown
                               value = '"' + value.replace('"', '\\\"') + '"';
                            }
                            data_tokens.push(value);
+                           data_obj[$(this).attr('name')] = value;
                         }
                      );
 
-                     $('#{$input_id}').val(data_tokens.join(' '));
+                     $('#{$str_input_id}').val(data_tokens.join(' '));
+                     $('#{$obj_input_id}').val(JSON.stringify(data_obj));
                   }
                );
             }

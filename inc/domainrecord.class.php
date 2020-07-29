@@ -278,6 +278,8 @@ class DomainRecord extends CommonDBChild {
    function showForm($ID, $options = []) {
       global $CFG_GLPI;
 
+      $rand = mt_rand();
+
       $this->initForm($ID, $options);
       $this->showFormHeader($options);
 
@@ -289,7 +291,8 @@ class DomainRecord extends CommonDBChild {
          'Domain', [
             'name'   => "domains_id",
             'value'  => $this->fields["domains_id"],
-            'entity' => $this->fields["entities_id"]
+            'entity' => $this->fields["entities_id"],
+            'rand'   => $rand,
          ]
       );
       echo "</td>";
@@ -317,7 +320,8 @@ class DomainRecord extends CommonDBChild {
             'name'      => "domainrecordtypes_id",
             'value'     => $this->fields["domainrecordtypes_id"],
             'entity'    => $this->fields["entities_id"],
-            'condition' => $condition
+            'condition' => $condition,
+            'rand'      => $rand,
          ]
       );
       echo "</td>";
@@ -327,10 +331,10 @@ class DomainRecord extends CommonDBChild {
       echo "</td>";
       echo "</tr>";
 
-      $rand = mt_rand();
       echo "<tr class='tab_bg_1'>";
       echo "<td>" . __('Data') . "</td>";
       echo "<td colspan='3'>";
+      echo "<input type='hidden' id='data_obj{$rand}' name='data_obj' value=\"".Html::cleanInputText($this->fields["data_obj"])."\">";
       echo "<input type='text' id='data{$rand}' name='data' value=\"".Html::cleanInputText($this->fields["data"])."\">";
       echo " <a href='#' title='".__s('Open helper form')."'>";
       echo "<i class='far fa-edit'></i>";
@@ -340,6 +344,11 @@ class DomainRecord extends CommonDBChild {
       $js = <<<JAVASCRIPT
          $(
             function () {
+               $('#data{$rand}, #dropdown_domainrecordtypes_id{$rand}').change(
+                  function (event) {
+                     $('#data_obj{$rand}').val(''); // empty "data_obj" value if "data" or "record type" changed
+                  }
+               );
                $('#data{$rand} + a').click(
                   function (event) {
                      event.preventDefault();
@@ -366,7 +375,8 @@ class DomainRecord extends CommonDBChild {
                         '{$CFG_GLPI["root_doc"]}/ajax/domainrecord_data_form.php',
                         {
                            domainrecordtypes_id: domainrecordtypes_id,
-                           input_id: 'data{$rand}'
+                           str_input_id: 'data{$rand}',
+                           obj_input_id: 'data_obj{$rand}'
                         },
                         function() {
                            $(this).find('form').on(

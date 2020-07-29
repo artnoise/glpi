@@ -74,3 +74,13 @@ if (countElementsInTable('glpi_domainrecordtypes', ['name' => 'CAA']) === 0) {
       }
    }
 }
+
+// Add a field to store record data as an object if user inputs data using helper form
+$migration->addField(
+   'glpi_domainrecords',
+   'data_obj',
+   'text',
+   [
+      'after'  => 'data'
+   ]
+);
