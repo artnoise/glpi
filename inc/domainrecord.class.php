@@ -275,6 +275,17 @@ class DomainRecord extends CommonDBChild {
       return $this->prepareInput($input);
    }
 
+   function pre_updateInDB() {
+
+      if ((in_array('data', $this->updates) || in_array('domainrecordtypes_id', $this->updates))
+          && !array_key_exists('data_obj', $this->input)) {
+         // Remove data stored as obj if "data" or "record type" changed" and "data_obj" is not part of input.
+         // It ensure that updates that "data_obj" will not contains obsolete values.
+         $this->fields['data_obj'] = 'NULL';
+         $this->updates[]          = 'data_obj';
+      }
+   }
+
    function showForm($ID, $options = []) {
       global $CFG_GLPI;
 
