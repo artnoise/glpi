@@ -280,7 +280,7 @@ class DomainRecordType extends CommonDropdown
             // Do not remove data stored as string as this representation may still be valid.
             $DB->update(
                DomainRecord::getTable(),
-               ['data_obj' => NULL],
+               ['data_obj' => null],
                [self::getForeignKeyField() => $this->fields['id']]
             );
          }
