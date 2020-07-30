@@ -250,32 +250,7 @@ class DomainRecordType extends CommonDropdown
          sort($old_keys);
          sort($new_keys);
 
-         $properties_changed = false;
          if ($old_keys != $new_keys) {
-            $properties_changed = true;
-         } else {
-            $getprop = function ($key, $array) {
-               foreach ($array as $prop) {
-                  if ($prop['key'] === $key) {
-                     return $prop;
-                  }
-               }
-            };
-
-            foreach ($old_keys as $key) {
-               $old_prop = $getprop($key, $old_fields);
-               $new_prop = $getprop($key, $new_fields);
-
-               $old_prop_quote_value = array_key_exists('quote_value', $old_prop) ? $old_prop['quote_value'] : false;
-               $new_prop_quote_value = array_key_exists('quote_value', $new_prop) ? $new_prop['quote_value'] : false;
-               if ($old_prop_quote_value !== $new_prop_quote_value) {
-                  $properties_changed = true;
-                  break;
-               }
-            }
-         }
-
-         if ($properties_changed) {
             // Remove data stored as obj as properties changed.
             // Do not remove data stored as string as this representation may still be valid.
             $DB->update(
@@ -460,11 +435,12 @@ class DomainRecordType extends CommonDropdown
                      $(this).find('input').each(
                         function () {
                            var value = $(this).val();
+                           data_obj[$(this).attr('name')] = value; // keep raw value
+
                            if ($(this).data('quote-value') && !value.match('/^".*"$/')) {
                               value = '"' + value.replace('"', '\\\"') + '"';
                            }
                            data_tokens.push(value);
-                           data_obj[$(this).attr('name')] = value;
                         }
                      );
 
