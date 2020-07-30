@@ -245,6 +245,8 @@ class DomainRecordType extends CommonDropdown
          $old_fields = $this->decodeFields($this->oldvalues['fields']);
          $new_fields = $this->decodeFields($this->fields['fields']);
 
+         // Checks only for keys changes as fields order, label, placeholder or quote_value properties changes
+         // should have no impact on object representation.
          $old_keys = array_column($old_fields, 'key');
          $new_keys = array_column($new_fields, 'key');
          sort($old_keys);
